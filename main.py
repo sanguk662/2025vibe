@@ -1,71 +1,35 @@
 import streamlit as st
 import random
-import streamlit.components.v1 as components
-import json
 
-# 음식 데이터
-menu_data = {
-    "한식": ["김치찌개", "제육볶음", "비빔밥", "불고기", "냉면"],
-    "중식": ["짜장면", "짬뽕", "탕수육", "마라탕", "꿔바로우"],
-    "일식": ["초밥", "라멘", "가츠동", "우동", "규동"],
-    "양식": ["파스타", "피자", "스테이크", "햄버거", "샐러드"],
-    "기타": ["쌀국수", "타코", "케밥", "샌드위치", "분짜"]
-}
+# 기본 점심 메뉴 리스트
+default_menu = [
+    "김치찌개", "된장찌개", "불고기", "제육볶음", "비빔밥", "김밥", "냉면",
+    "칼국수", "돈까스", "햄버거", "파스타", "샐러드", "쌀국수", "초밥", "떡볶이"
+]
 
-st.set_page_config(page_title="점심 룰렛 추천기", layout="centered")
-st.title("🎡 점심 룰렛 추천기")
-st.caption("먹고 싶은 음식 종류를 선택하세요.")
+# 세션 상태에 메뉴 저장
+if 'menu' not in st.session_state:
+    st.session_state.menu = default_menu.copy()
 
-# 사용자 선택
-selected_categories = st.multiselect("음식 종류 선택", menu_data.keys(), default=list(menu_data.keys()))
+st.title("🍱 오늘 뭐 먹지?")
 
-# 메뉴 구성
-filtered_menu = []
-for cat in selected_categories:
-    for item in menu_data[cat]:
-        filtered_menu.append(f"{item} ({cat})")
+# 메뉴 추천 버튼
+if st.button("점심 메뉴 추천받기"):
+    recommendation = random.choice(st.session_state.menu)
+    st.success(f"✨ 오늘의 추천 메뉴: **{recommendation}**")
 
-if not filtered_menu:
-    st.warning("음식 종류를 선택해주세요.")
-    st.stop()
+# 메뉴 추가 기능
+with st.expander("➕ 메뉴 직접 추가하기"):
+    new_item = st.text_input("추가할 메뉴 입력")
+    if st.button("메뉴 추가"):
+        if new_item and new_item not in st.session_state.menu:
+            st.session_state.menu.append(new_item)
+            st.success(f"'{new_item}' 메뉴가 추가되었어요!")
+        elif new_item in st.session_state.menu:
+            st.warning("이미 있는 메뉴입니다.")
+        else:
+            st.warning("메뉴를 입력해주세요.")
 
-# 룰렛 HTML + JS
-if st.button("🎯 룰렛 돌리기"):
-    items_json = json.dumps(filtered_menu, ensure_ascii=False)
-    html_code = f"""
-    <html>
-    <head>
-        <script src="https://cdn.jsdelivr.net/npm/wheel-spin@1.0.3/wheel.min.js"></script>
-        <style>
-            #wheel {{
-                width: 400px;
-                margin: 0 auto;
-            }}
-        </style>
-    </head>
-    <body>
-        <div id="wheel"></div>
-        <script>
-            const items = {items_json};
-            const wheel = new Wheel({
-                items: items,
-                width: 400,
-                radius: 150,
-                centerWidth: 80,
-                fontSize: 16,
-                onSpinEnd: function(winner) {{
-                    alert("오늘의 점심은: " + winner);
-                }}
-            });
-            wheel.render(document.getElementById("wheel"));
-            wheel.spin();
-        </script>
-    </body>
-    </html>
-    """
-
-    components.html(html_code, height=500)
-
-# 현재 선택 메뉴 확인
-with st.expander("📋 현재 선택된 메뉴 목록"):
-    st.write(filtered_menu)
+# 현재 메뉴 리스트 보여주기
+with st.expander("📋 현재 메뉴 리스트 보기"):
+    st.write(st.session_state.menu)
