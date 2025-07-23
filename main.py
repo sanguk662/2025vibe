@@ -13,8 +13,12 @@ st.title("✅ 할 일 체크리스트 앱")
 # -----------------------
 if "todos" not in st.session_state:
     st.session_state.todos = []
-else:
-    st.session_state.todos = [t for t in st.session_state.todos if "id" in t]
+
+# -----------------------
+# 날짜 변환 함수 (문자열 -> 날짜 객체)
+# -----------------------
+def parse_date(val):
+    return val if isinstance(val, datetime.date) else datetime.datetime.strptime(val, "%Y-%m-%d").date()
 
 # -----------------------
 # 할 일 추가 폼
@@ -43,7 +47,7 @@ with st.form("add_task_form"):
 st.markdown("---")
 
 # -----------------------
-# 할 일 출력 함수 (상태 유지 개선)
+# 할 일 출력 함수 (체크 상태 유지 포함)
 # -----------------------
 def show_tasks(title, filter_fn):
     st.subheader(title)
@@ -70,27 +74,26 @@ def show_tasks(title, filter_fn):
                 ]
                 st.experimental_rerun()
 
-            updated_todos.append({**item, "done": done})  # 체크 반영
+            updated_todos.append({**item, "done": done})  # 상태 저장
         else:
             updated_todos.append(item)
 
-    # ✅ 업데이트 반영
     st.session_state.todos = updated_todos
 
     if not found:
         st.info("할 일이 없습니다!")
 
 # -----------------------
-# 탭 구성 및 분류 출력
+# 탭 구성 및 필터링 기준
 # -----------------------
 today = datetime.date.today()
 tab1, tab2, tab3 = st.tabs(["📌 오늘 할 일", "📆 예정된 할 일", "✅ 완료된 할 일"])
 
 with tab1:
-    show_tasks("📌 오늘 할 일", lambda x: not x["done"] and x["date"] == today)
+    show_tasks("📌 오늘 할 일", lambda x: not x["done"] and parse_date(x["date"]) == today)
 
 with tab2:
-    show_tasks("📆 예정된 할 일", lambda x: not x["done"] and x["date"] > today)
+    show_tasks("📆 예정된 할 일", lambda x: not x["done"] and parse_date(x["date"]) > today)
 
 with tab3:
     show_tasks("✅ 완료된 할 일", lambda x: x["done"])
