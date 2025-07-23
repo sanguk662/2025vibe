@@ -2,19 +2,19 @@ import streamlit as st
 import datetime
 import uuid
 
-st.set_page_config(page_title="✅ 나의 할 일 관리 앱", layout="centered")
-st.title("✅ 나의 할 일 관리 앱")
+st.set_page_config(page_title="📆 할 일 체크리스트 앱", layout="centered")
+st.title("✅ 할 일 체크리스트 앱")
 
-# ---------------------------
-# 초기 세션 상태 설정
-# ---------------------------
+# ----------------------
+# 세션 상태 초기화
+# ----------------------
 if "todos" not in st.session_state:
     st.session_state.todos = []
 
-# ---------------------------
+# ----------------------
 # 할 일 추가 폼
-# ---------------------------
-with st.form("add_task"):
+# ----------------------
+with st.form("add_task_form"):
     col1, col2 = st.columns([3, 1])
     with col1:
         task_text = st.text_input("할 일을 입력하세요 ✍️")
@@ -24,30 +24,65 @@ with st.form("add_task"):
 
     if submitted and task_text.strip():
         st.session_state.todos.append({
-            "id": str(uuid.uuid4()),  # ✅ 중복 방지를 위한 고유 ID
+            "id": str(uuid.uuid4()),   # 고유한 ID
             "text": task_text.strip(),
             "done": False,
             "date": due_date
         })
-        st.success(f"'{task_text}' 추가되었습니다!")
+        st.success(f"'{task_text}' 할 일이 추가되었습니다!")
 
 st.markdown("---")
 
-# ---------------------------
+# ----------------------
 # 할 일 출력 함수
-# ---------------------------
-def show_tasks(filter_fn):
+# ----------------------
+def show_tasks(title, filter_fn):
+    st.subheader(title)
     found = False
     for item in st.session_state.todos:
         if filter_fn(item):
             found = True
             task_id = item["id"]
-            cols = st.columns([0.1, 0.7, 0.1])
-            done = cols[0].checkbox(
-                "", value=item["done"], key=f"done_{task_id}"
-            )
+            cols = st.columns([0.08, 0.75, 0.1])
+            done = cols[0].checkbox("", value=item["done"], key=f"done_{task_id}")
             if done:
                 cols[1].markdown(f"~~{item['text']}~~ (🗓 {item['date']})")
             else:
                 cols[1].markdown(f"{item['text']} (🗓 {item['date']})")
+            if cols[2].button("🗑️", key=f"del_{task_id}"):
+                st.session_state.todos = [
+                    t for t in st.session_state.todos if t["id"] != item["id"]
+                ]
+                st.experimental_rerun()
+            item["done"] = done
+    if not found:
+        st.info("할 일이 없습니다.")
 
+# ----------------------
+# 탭 구성
+# ----------------------
+today = datetime.date.today()
+tab1, tab2, tab3 = st.tabs(["📌 오늘 할 일", "📆 예정된 할 일", "✅ 완료된 할 일"])
+
+with tab1:
+    show_tasks("📌 오늘 해야 할 일", lambda x: not x["done"] and x["date"] == today)
+
+with tab2:
+    show_tasks("📆 앞으로의 할 일", lambda x: not x["done"] and x["date"] > today)
+
+with tab3:
+    show_tasks("✅ 완료된 할 일", lambda x: x["done"])
+
+# ----------------------
+# 통계 영역
+# ----------------------
+total = len(st.session_state.todos)
+done = len([x for x in st.session_state.todos if x["done"]])
+
+if total > 0:
+    percent = int((done / total) * 100)
+    st.markdown("---")
+    st.progress(done / total)
+    st.write(f"📊 완료된 일: {done} / {total}개 ({percent}%)")
+else:
+    st.info("할 일을 추가해보세요.")
