@@ -1,6 +1,5 @@
 import streamlit as st
 import random
-import time
 import streamlit.components.v1 as components
 
 # 음식 데이터
@@ -31,30 +30,5 @@ if not filtered_menu:
 # 대포 추천 버튼
 if st.button("발사! 대포에서 점심 메뉴 쏘기 💥"):
     # 음식 선택
-    chosen_category, chosen_food = random.choice(filtered_menu)
+    chos
 
-    # 애니메이션 효과 (HTML + CSS)
-    cannon_html = f"""
-    <style>
-    .cannon-wrapper {{
-        text-align: center;
-        margin-top: 50px;
-        position: relative;
-    }}
-    .cannon {{
-        width: 150px;
-        height: auto;
-    }}
-    .food {{
-        font-size: 32px;
-        font-weight: bold;
-        animation: shoot 1s ease-out forwards;
-        position: absolute;
-        left: 50%;
-        top: 0;
-        transform: translateX(-50%);
-        color: #FF5722;
-    }}
-
-    for cat in selected_categories:
-        st.write(f"**{cat}**: {', '.join(menu_data[cat])}")
