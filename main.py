@@ -1,35 +1,81 @@
 import streamlit as st
 import random
+import streamlit.components.v1 as components
+import json
 
-# 기본 점심 메뉴 리스트
-default_menu = [
-    "김치찌개", "된장찌개", "불고기", "제육볶음", "비빔밥", "김밥", "냉면",
-    "칼국수", "돈까스", "햄버거", "파스타", "샐러드", "쌀국수", "초밥", "떡볶이"
-]
+# 음식 데이터 (카테고리별)
+menu_data = {
+    "한식": ["김치찌개", "제육볶음", "비빔밥", "불고기", "냉면"],
+    "중식": ["짜장면", "짬뽕", "탕수육", "마라탕", "꿔바로우"],
+    "일식": ["초밥", "라멘", "가츠동", "우동", "규동"],
+    "양식": ["파스타", "피자", "스테이크", "햄버거", "샐러드"],
+    "기타": ["쌀국수", "타코", "케밥", "샌드위치", "분짜"]
+}
 
-# 세션 상태에 메뉴 저장
-if 'menu' not in st.session_state:
-    st.session_state.menu = default_menu.copy()
+st.set_page_config(page_title="점심 룰렛", layout="centered")
+st.title("🎡 오늘의 점심 룰렛")
 
-st.title("🍱 오늘 뭐 먹지?")
+# 카테고리 선택
+selected_categories = st.multiselect("먹고 싶은 음식 종류를 골라보세요:", menu_data.keys(), default=list(menu_data.keys()))
 
-# 메뉴 추천 버튼
-if st.button("점심 메뉴 추천받기"):
-    recommendation = random.choice(st.session_state.menu)
-    st.success(f"✨ 오늘의 추천 메뉴: **{recommendation}**")
+# 선택된 메뉴 구성
+filtered_menu = []
+for cat in selected_categories:
+    filtered_menu.extend(menu_data[cat])
 
-# 메뉴 추가 기능
-with st.expander("➕ 메뉴 직접 추가하기"):
-    new_item = st.text_input("추가할 메뉴 입력")
-    if st.button("메뉴 추가"):
-        if new_item and new_item not in st.session_state.menu:
-            st.session_state.menu.append(new_item)
-            st.success(f"'{new_item}' 메뉴가 추가되었어요!")
-        elif new_item in st.session_state.menu:
-            st.warning("이미 있는 메뉴입니다.")
-        else:
-            st.warning("메뉴를 입력해주세요.")
+if not filtered_menu:
+    st.warning("메뉴가 없습니다. 최소 한 가지 카테고리를 선택해주세요.")
+    st.stop()
 
-# 현재 메뉴 리스트 보여주기
-with st.expander("📋 현재 메뉴 리스트 보기"):
-    st.write(st.session_state.menu)
+# 룰렛 실행 버튼
+if st.button("룰렛 돌리기 🎯"):
+    selected_menu = random.choice(filtered_menu)
+    menu_json = json.dumps(filtered_menu, ensure_ascii=False)
+
+    # 룰렛 HTML/JS 삽입 (basic animation)
+    html_code = f"""
+    <html>
+    <head>
+    <style>
+        .wheel {{
+            margin: auto;
+            border: 10px solid #555;
+            border-radius: 50%;
+            width: 300px;
+            height: 300px;
+            position: relative;
+            animation: spin 4s cubic-bezier(0.33, 1, 0.68, 1);
+        }}
+
+        .center {{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }}
+
+        @keyframes spin {{
+            0% {{ transform: rotate(0deg); }}
+            100% {{ transform: rotate({random.randint(720, 1440)}deg); }}
+        }}
+    </style>
+    </head>
+    <body>
+        <div class="wheel">
+            <div class="center">{selected_menu}</div>
+        </div>
+    </body>
+    </html>
+    """
+
+    components.html(html_code, height=350)
+
+    st.success(f"🥳 오늘의 점심은 **{selected_menu}** 입니다!")
+
+# 현재 메뉴 목록 보기
+with st.expander("📋 현재 메뉴 목록"):
+    for cat in selected_categories:
+        st.write(f"**{cat}**: {', '.join(menu_data[cat])}")
