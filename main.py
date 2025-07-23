@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 import streamlit.components.v1 as components
+import json
 
 # 음식 데이터
 menu_data = {
@@ -11,66 +12,60 @@ menu_data = {
     "기타": ["쌀국수", "타코", "케밥", "샌드위치", "분짜"]
 }
 
-# 페이지 설정
-st.set_page_config(page_title="점심 대포 추천기", layout="centered")
-st.title("🎯 점심 대포 추천기")
-st.caption("먹고 싶은 음식 종류를 골라보세요!")
+st.set_page_config(page_title="점심 룰렛 추천기", layout="centered")
+st.title("🎡 점심 룰렛 추천기")
+st.caption("먹고 싶은 음식 종류를 선택하세요.")
 
-# 음식 종류 선택
-selected_categories = st.multiselect(
-    "음식 종류 선택",
-    options=list(menu_data.keys()),
-    default=list(menu_data.keys())
-)
+# 사용자 선택
+selected_categories = st.multiselect("음식 종류 선택", menu_data.keys(), default=list(menu_data.keys()))
 
-# 필터된 메뉴 만들기
-filtered_menu = [
-    (category, food)
-    for category in selected_categories
-    for food in menu_data[category]
-]
+# 메뉴 구성
+filtered_menu = []
+for cat in selected_categories:
+    for item in menu_data[cat]:
+        filtered_menu.append(f"{item} ({cat})")
 
-# 대포 버튼
-if st.button("발사! 대포에서 점심 메뉴 쏘기 💥"):
+if not filtered_menu:
+    st.warning("음식 종류를 선택해주세요.")
+    st.stop()
 
-    if not filtered_menu:
-        st.error("⚠️ 추천할 음식이 없습니다. 음식 종류를 선택해주세요.")
-        st.stop()
+# 룰렛 HTML + JS
+if st.button("🎯 룰렛 돌리기"):
+    items_json = json.dumps(filtered_menu, ensure_ascii=False)
+    html_code = f"""
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/wheel-spin@1.0.3/wheel.min.js"></script>
+        <style>
+            #wheel {{
+                width: 400px;
+                margin: 0 auto;
+            }}
+        </style>
+    </head>
+    <body>
+        <div id="wheel"></div>
+        <script>
+            const items = {items_json};
+            const wheel = new Wheel({
+                items: items,
+                width: 400,
+                radius: 150,
+                centerWidth: 80,
+                fontSize: 16,
+                onSpinEnd: function(winner) {{
+                    alert("오늘의 점심은: " + winner);
+                }}
+            });
+            wheel.render(document.getElementById("wheel"));
+            wheel.spin();
+        </script>
+    </body>
+    </html>
+    """
 
-    chosen_category, chosen_food = random.choice(filtered_menu)
+    components.html(html_code, height=500)
 
-    # HTML 애니메이션 삽입
-    cannon_html = f"""
-    <style>
-    .cannon-wrapper {{
-        position: relative;
-        text-align: center;
-        margin-top: 50px;
-        height: 200px;
-    }}
-    .cannon {{
-        width: 100px;
-        margin-top: 60px;
-    }}
-    .food-shot {{
-        font-size: 32px;
-        font-weight: bold;
-        color: #ff5722;
-        position: absolute;
-        left: 50%;
-        top: 60px;
-        transform: translateX(-50%);
-        opacity: 0;
-        animation: shoot 1s ease-out forwards;
-    }}
-    @keyframes shoot {{
-        0% {{
-            opacity: 0;
-            transform: translateX(-50%) scale(0.2) translateY(0);
-        }}
-        50% {{
-            opacity: 1;
-            transform: translateX(-50%) scale(1.4) translateY(-40px);
-        }}
-        100% {{
-            transform: translateX(-50%) scale(1) translateY(-120px);
+# 현재 선택 메뉴 확인
+with st.expander("📋 현재 선택된 메뉴 목록"):
+    st.write(filtered_menu)
