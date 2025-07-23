@@ -1,38 +1,100 @@
 import streamlit as st
-import os
+import random
+import streamlit.components.v1 as components
 
-# 페이지 제목
-st.title("📝 나의 할 일 목록 앱")
-st.write("할 일을 입력하고 저장해보세요!")
+# ------------------------
+# 🍱 음식 데이터
+# ------------------------
+menu_data = {
+    "한식": ["김치찌개", "제육볶음", "비빔밥", "불고기", "냉면"],
+    "중식": ["짜장면", "짬뽕", "탕수육", "마라탕", "꿔바로우"],
+    "일식": ["초밥", "라멘", "가츠동", "우동", "규동"],
+    "양식": ["파스타", "피자", "스테이크", "햄버거", "샐러드"],
+    "기타": ["쌀국수", "타코", "케밥", "샌드위치", "분짜"]
+}
 
-# 파일 이름
-FILENAME = "todo_list.txt"
+# ------------------------
+# 🧾 기본 설정
+# ------------------------
+st.set_page_config(page_title="점심 대포 추천기", layout="centered")
+st.title("🎯 점심 대포 추천기")
+st.caption("먹고 싶은 음식 종류를 골라주세요!")
 
-# 할 일 입력
-todo_input = st.text_input("할 일을 입력하세요:")
+# ------------------------
+# ✅ 음식 종류 선택
+# ------------------------
+selected_categories = st.multiselect(
+    "음식 종류 선택",
+    options=list(menu_data.keys()),
+    default=list(menu_data.keys())
+)
 
-# 저장 버튼
-if st.button("📥 저장하기"):
-    if todo_input.strip() == "":
-        st.warning("❗ 할 일을 입력해야 저장됩니다.")
-    else:
-        with open(FILENAME, "a", encoding="utf-8") as f:
-            f.write(todo_input + "\n")
-        st.success("✅ 저장되었습니다!")
+# ------------------------
+# 🎯 메뉴 필터링
+# ------------------------
+filtered_menu = [
+    (category, food)
+    for category in selected_categories
+    for food in menu_data[category]
+]
 
-# 구분선
-st.markdown("---")
+# ------------------------
+# 💥 대포 발사 버튼
+# ------------------------
+if st.button("발사! 대포에서 점심 메뉴 쏘기 💥"):
 
-# 저장된 할 일 목록 출력
-st.subheader("📋 저장된 할 일 목록")
+    if not filtered_menu:
+        st.error("⚠️ 음식 종류를 하나 이상 선택해주세요.")
+        st.stop()
 
-if os.path.exists(FILENAME):
-    with open(FILENAME, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        if lines:
-            for i, line in enumerate(lines, 1):
-                st.write(f"{i}. {line.strip()}")
-        else:
-            st.info("할 일이 아직 없습니다.")
-else:
-    st.info("할 일이 아직 없습니다.")
+    chosen_category, chosen_food = random.choice(filtered_menu)
+
+    # 대포 애니메이션 HTML + CSS
+    cannon_html = f"""
+    <style>
+    .cannon-wrapper {{
+        position: relative;
+        text-align: center;
+        margin-top: 50px;
+        height: 220px;
+    }}
+    .cannon {{
+        width: 120px;
+        margin-top: 80px;
+    }}
+    .food-shot {{
+        font-size: 30px;
+        font-weight: bold;
+        color: #FF5722;
+        position: absolute;
+        left: 50%;
+        top: 70px;
+        transform: translateX(-50%);
+        opacity: 0;
+        animation: shoot 1s ease-out forwards;
+    }}
+    @keyframes shoot {{
+        0% {{
+            opacity: 0;
+            transform: translateX(-50%) translateY(0px) scale(0.3);
+        }}
+        50% {{
+            opacity: 1;
+            transform: translateX(-50%) translateY(-60px) scale(1.3);
+        }}
+        100% {{
+            opacity: 1;
+            transform: translateX(-50%) translateY(-150px) scale(1);
+        }}
+    }}
+    </style>
+
+    <div class="cannon-wrapper">
+        <div class="food-shot">{chosen_food} <span style='font-size:16px;'>({chosen_category})</span></div>
+        <img class="cannon" src="https://cdn-icons-png.flaticon.com/512/727/727399.png" />
+    </div>
+    """
+
+    components.html(cannon_html, height=300)
+    st.success(f"🍽️ 오늘의 점심은 **{chosen_category} - {chosen_food}** 입니다!")
+
