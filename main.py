@@ -15,7 +15,7 @@ if "todos" not in st.session_state:
     st.session_state.todos = []
 
 # -----------------------
-# 날짜 변환 함수 (문자열 -> 날짜 객체)
+# 날짜 변환 함수
 # -----------------------
 def parse_date(val):
     return val if isinstance(val, datetime.date) else datetime.datetime.strptime(val, "%Y-%m-%d").date()
@@ -47,7 +47,7 @@ with st.form("add_task_form"):
 st.markdown("---")
 
 # -----------------------
-# 할 일 출력 함수 (체크 상태 유지 포함)
+# 할 일 출력 함수
 # -----------------------
 def show_tasks(title, filter_fn):
     st.subheader(title)
@@ -74,7 +74,7 @@ def show_tasks(title, filter_fn):
                 ]
                 st.experimental_rerun()
 
-            updated_todos.append({**item, "done": done})  # 상태 저장
+            updated_todos.append({**item, "done": done})
         else:
             updated_todos.append(item)
 
@@ -99,7 +99,7 @@ with tab3:
     show_tasks("✅ 완료된 할 일", lambda x: x["done"])
 
 # -----------------------
-# 진행률 표시
+# 진행률 표시 + 완료 메시지
 # -----------------------
 total = len(st.session_state.todos)
 done = len([x for x in st.session_state.todos if x["done"]])
@@ -109,5 +109,10 @@ if total > 0:
     st.markdown("---")
     st.progress(done / total)
     st.write(f"📊 완료된 일: {done} / {total}개 ({percent}%)")
+
+    # 🎉 완료된 경우 풍선 + 메시지
+    if done == total:
+        st.success("🎉 할 일을 모두 끝냈어요! 정말 멋져요! 👏")
+        st.balloons()
 else:
     st.info("할 일을 추가해보세요 😄")
